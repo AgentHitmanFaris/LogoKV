@@ -1,26 +1,56 @@
-﻿<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html>
+<html lang="ms">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LogoKV - Kolej Vokasional Logo Maker</title>
+    <link rel="preload" href="assets/font/RBNo3.1-Bold.otf" as="font" type="font/otf" crossorigin="anonymous">
+    <link rel="preload" href="assets/font/RBNo3.1-Book.otf" as="font" type="font/otf" crossorigin="anonymous">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <link rel="stylesheet" href="style.css">
-    <link rel="icon" type="image/png" href="LogoKV.ico">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"
+        integrity="sha512-BNaRQnYJYiPSqHHDb58B0yaPfCu+Wgds8Gp/gU33kqBtgNS4tSPHuGibyoeqMV/TJlSKda6FXzoEyYGjTe+vXA=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <meta name="description"
+        content="LogoKV - Penjana logo Kolej Vokasional berkualiti tinggi dan mudah digunakan. Hasilkan logo KV anda dalam format HD PNG sekarang.">
+    <meta name="keywords" content="LogoKV, Kolej Vokasional, Logo Maker, Penjana Logo, KV Malaysia, Logo HD">
+    <meta name="author" content="aldr syfq & @AHF">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://github.com/aldrsyfq/LogoKV">
+    <meta property="og:title" content="LogoKV - Penjana Logo Kolej Vokasional">
+    <meta property="og:description" content="Hasilkan logo Kolej Vokasional anda dalam format HD dengan mudah dan pantas.">
+    <meta property="og:image" content="assets/img/kvlogo.png">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://github.com/aldrsyfq/LogoKV">
+    <meta property="twitter:title" content="LogoKV - Penjana Logo Kolej Vokasional">
+    <meta property="twitter:description" content="Hasilkan logo Kolej Vokasional anda dalam format HD dengan mudah dan pantas.">
+    <meta property="twitter:image" content="assets/img/kvlogo.png">
+
+    <link rel="stylesheet" href="assets/stylesheet/style.css">
+    <link rel="icon" type="image/png" href="assets/img/LogoKV.ico">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1b156d">
 </head>
 
 <body>
-    <div class="navi">
-        <h1>LogoKV</h1>
-        <a href="https://www.youtube.com/@aldrsyfq" target="_blank" rel="noopener noreferrer"><img src="youtube.ico"
-                alt="YouTube" style="width: 24px; height: 24px; filter: brightness(100);"></a>
-    </div>
+    <header class="navi" role="banner">
+        <div class="header-left">
+            <img src="assets/img/kvlogo.png" alt="" class="header-logo">
+            <h1>LogoKV</h1>
+            <span class="version-badge">v1.1</span>
+        </div>
+        <a href="https://www.youtube.com/@aldrsyfq" target="_blank" rel="noopener noreferrer" aria-label="YouTube Channel aldr syfq">
+            <img src="assets/img/youtube.ico" alt="YouTube" style="width: 24px; height: 24px; filter: brightness(100);">
+        </a>
+    </header>
     <div class="preview-card bg-solid-white">
         <div class="logo-preview" id="logo-container">
             <div class="logo-mark-wrap">
-                <img class="kv-logo" src="kvlogo.png" alt="KV Logo">
+                <img class="kv-logo" src="assets/img/kvlogo.png" alt="KV Logo">
                 <span id="logo-text-mark-bottom">bersama membina masa depan</span>
             </div>
             <div class="logo-text-wrap">
@@ -32,22 +62,35 @@
         </div>
     </div>
 
-    <div class="panel-container">
+    <main class="panel-container">
         <div class="controls">
-            <div class="input-group">
-                <label for="bg-toggle">Background Color</label>
-                <div class="bg-swatches">
-                    <button class="bg-swatch" data-bg="solid-white" aria-label="Solid White background"></button>
-                    <button class="bg-swatch" data-bg="checkered-white"
-                        aria-label="Checkered White background"></button>
-                    <button class="bg-swatch" data-bg="solid-black" aria-label="Solid Black background"></button>
-                    <button class="bg-swatch" data-bg="checkered-black"
-                        aria-label="Checkered Black background"></button>
+            <div class="main-inputs">
+                <div class="input-group">
+                    <label for="bg-toggle">Background Color</label>
+                    <div class="bg-swatches">
+                        <button class="bg-swatch" data-bg="solid-white" aria-label="Solid White background"></button>
+                        <button class="bg-swatch" data-bg="checkered-white"
+                            aria-label="Checkered White background"></button>
+                        <button class="bg-swatch" data-bg="solid-black" aria-label="Solid Black background"></button>
+                        <button class="bg-swatch" data-bg="checkered-black"
+                            aria-label="Checkered Black background"></button>
+                    </div>
                 </div>
-            </div>
-            <div class="input-group">
-                <label>Nama Kolej</label>
-                <input type="text" id="text-input-bottom" placeholder="KOLEJ VOKASIONAL..." maxlength="64">
+                <div class="input-group">
+                    <label>Nama Kolej</label>
+                    <div class="dropdown-wrapper">
+                        <input type="text" id="text-input-bottom" placeholder="KOLEJ VOKASIONAL..." maxlength="64"
+                            autocomplete="off">
+                        <div id="kv-suggestions" class="suggestions-container hidden"></div>
+                    </div>
+                </div>
+                <label class="toggle-row" for="advanced-toggle" aria-label="Toggel Tetapan Lanjutan">
+                    <span>Advanced Settings</span>
+                    <input type="checkbox" id="advanced-toggle">
+                    <svg class="advance-chevron" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                        <path d="M6 9 L12 15 L18 9"></path>
+                    </svg>
+                </label>
             </div>
             <div id="advanced-inputs" class="advanced-inputs hidden">
                 <div class="input-group">
@@ -65,13 +108,6 @@
                         maxlength="32">
                 </div>
             </div>
-            <label class="toggle-row" for="advanced-toggle">
-                <span>Advance</span>
-                <input type="checkbox" id="advanced-toggle">
-                <svg class="advance-chevron" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                    <path d="M6 9 L12 15 L18 9"></path>
-                </svg>
-            </label>
         </div>
         <aside class="description">
             <div class="input-group">
@@ -85,11 +121,23 @@
             <p>Use this tool to create a custom logo for your vocational college. Simply enter the details and click
                 "Download PNG (HD)" to save your creation.</p>
             <p>You can now click on the logo preview to zoom in and view it in more detail.</p>
-            <p>Designed and developed with ❤︎⁠ by <strong>aldr syfq</strong>.</p>
+            <p>Designed and developed with ❤︎⁠ by <strong>aldr syfq</strong> & <a
+                    href="https://github.com/AgentHitmanFaris" target="_blank" rel="noopener noreferrer">@AHF</a>.</p>
         </aside>
-    </div>
+    </main>
 
-    <script src="script.js"></script>
+    <footer class="quick-footer">
+        <div id="link">
+            <span>&copy; 2026 LogoKV. Rekaan & Pembangunan oleh <strong>aldr syfq</strong> & <a
+                    href="https://github.com/AgentHitmanFaris" target="_blank"
+                    rel="noopener noreferrer">@AHF</a>.</span>
+        </div>
+    </footer>
+
+    <script src="assets/script/list_kv.js"></script>
+
+    <script src="assets/script/script.js"></script>
+
 </body>
 
 </html>

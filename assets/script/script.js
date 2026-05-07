@@ -18,6 +18,21 @@ const SUBHEADING_MIN_SIZE = 7;
 const BOTTOM_TEXT_MAX_SIZE = 30;
 const BOTTOM_TEXT_MIN_SIZE = 1;
 
+/**
+ * Debounce function to limit the rate at which a function can fire.
+ */
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
 function fitTextToWidth(element, maxSize, minSize) {
     if (!element || element.clientWidth <= 0) return;
 
@@ -62,10 +77,6 @@ textInputSubheading.addEventListener('input', (e) => {
     fitSubheadingText();
 });
 
-textInputBottom.addEventListener('input', (e) => {
-    logoTextBottom.textContent = e.target.value || "";
-    fitBottomText();
-});
 
 textInputMarkBottom.addEventListener('input', (e) => {
     logoTextMarkBottom.textContent = e.target.value || "bersama membina masa depan";
@@ -73,19 +84,27 @@ textInputMarkBottom.addEventListener('input', (e) => {
 });
 
 advancedToggle.addEventListener('change', () => {
+    const controls = document.querySelector('.controls');
     if (advancedToggle.checked) {
+        controls.classList.add('has-advanced');
         advancedInputs.classList.remove('hidden');
         requestAnimationFrame(() => {
             advancedInputs.classList.add('expanded');
         });
     } else {
         advancedInputs.classList.remove('expanded');
-        advancedInputs.addEventListener('transitionend', function hideAfterTransition(event) {
-            if (event.propertyName === 'opacity') {
+        
+        // Wait for the collapse animation to finish before removing the grid column
+        const handleTransitionEnd = (event) => {
+            // Check for properties that indicate the animation is done
+            if (event.propertyName === 'opacity' || event.propertyName === 'max-height') {
+                controls.classList.remove('has-advanced');
                 advancedInputs.classList.add('hidden');
-                advancedInputs.removeEventListener('transitionend', hideAfterTransition);
+                advancedInputs.removeEventListener('transitionend', handleTransitionEnd);
             }
-        });
+        };
+        
+        advancedInputs.addEventListener('transitionend', handleTransitionEnd);
     }
 });
 
@@ -106,13 +125,19 @@ logoContainer.addEventListener('click', () => {
     logoContainer.classList.toggle('zoomed');
 });
 
-window.addEventListener('resize', fitMarkBottomText);
-window.addEventListener('resize', fitSubheadingText);
-window.addEventListener('resize', fitBottomText);
+// Combined resize handler with debouncing
+const handleResize = debounce(() => {
+    fitMarkBottomText();
+    fitSubheadingText();
+    fitBottomText();
+}, 150);
+
+window.addEventListener('resize', handleResize);
 window.addEventListener('load', () => {
     if (!logoTextBottom.textContent.trim()) {
         logoTextBottom.textContent = "";
     }
+    // Initial fitting
     fitMarkBottomText();
     fitSubheadingText();
     fitBottomText();
@@ -128,10 +153,15 @@ if (document.fonts && document.fonts.ready) {
 
 // Download Function
 downloadBtn.addEventListener('click', () => {
-    // Increase render scale for a sharper exported PNG.
-    const exportScale = Math.max(8, window.devicePixelRatio || 1);
+    const originalBtnText = downloadBtn.innerHTML;
+    downloadBtn.innerHTML = '<span>Menjana Logo...</span>';
+    downloadBtn.style.opacity = '0.7';
+    downloadBtn.disabled = true;
 
-    // html2canvas takes the element and a settings object
+    // Increase render scale for a sharper exported PNG.
+    // 5 is a good balance for HD quality without crashing mobile browsers.
+    const exportScale = 5;
+
     html2canvas(logoContainer, {
         backgroundColor: null, // This makes the background transparent!
         scale: exportScale,
@@ -165,5 +195,65 @@ downloadBtn.addEventListener('click', () => {
         link.download = `LogoKV-${bottom}.png`;
         link.href = canvas.toDataURL("image/png");
         link.click();
+        
+        // Restore button state
+        downloadBtn.innerHTML = originalBtnText;
+        downloadBtn.style.opacity = '1';
+        downloadBtn.disabled = false;
+    }).catch(err => {
+        console.error("Export failed:", err);
+        downloadBtn.innerHTML = originalBtnText;
+        downloadBtn.style.opacity = '1';
+        downloadBtn.disabled = false;
     });
+});
+// Custom Beautiful Dropdown Logic
+const suggestionsContainer = document.getElementById('kv-suggestions');
+
+function updateSuggestions(val) {
+    if (typeof kvListData === 'undefined') return;
+    
+    const filtered = kvListData.filter(kv => 
+        kv.toLowerCase().includes(val.toLowerCase())
+    ).slice(0, 10); // Limit to top 10 for performance/beauty
+
+    suggestionsContainer.innerHTML = '';
+    
+    if (filtered.length > 0 && val.length > 0) {
+        filtered.forEach(kvName => {
+            const div = document.createElement('div');
+            div.className = 'suggestion-item';
+            div.textContent = kvName;
+            div.addEventListener('click', () => {
+                textInputBottom.value = kvName;
+                logoTextBottom.textContent = kvName;
+                fitBottomText();
+                suggestionsContainer.classList.add('hidden');
+            });
+            suggestionsContainer.appendChild(div);
+        });
+        suggestionsContainer.classList.remove('hidden');
+    } else {
+        suggestionsContainer.classList.add('hidden');
+    }
+}
+
+textInputBottom.addEventListener('input', (e) => {
+    logoTextBottom.textContent = e.target.value || "";
+    fitBottomText();
+    updateSuggestions(e.target.value);
+});
+
+// Hide suggestions when clicking outside
+document.addEventListener('click', (e) => {
+    if (!e.target.closest('.dropdown-wrapper')) {
+        suggestionsContainer.classList.add('hidden');
+    }
+});
+
+// Show suggestions on focus if there's text
+textInputBottom.addEventListener('focus', (e) => {
+    if (e.target.value.length > 0) {
+        updateSuggestions(e.target.value);
+    }
 });

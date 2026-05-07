@@ -1,0 +1,21 @@
+{
+    "name": "LogoKV - Penjana Logo Kolej Vokasional",
+    "short_name": "LogoKV",
+    "description": "Penjana logo Kolej Vokasional berkualiti tinggi.",
+    "start_url": "index.html",
+    "display": "standalone",
+    "background_color": "#1b156d",
+    "theme_color": "#1b156d",
+    "icons": [
+        {
+            "src": "assets/img/kvlogo.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "assets/img/kvlogo.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ]
+}
