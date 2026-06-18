@@ -4,7 +4,7 @@ const textInputSubheading = document.getElementById('text-input-subheading');
 const textInputMarkBottom = document.getElementById('text-input-mark-bottom');
 const advancedToggle = document.getElementById('advanced-toggle');
 const advancedInputs = document.getElementById('advanced-inputs');
-const logoTextTop = document.getElementById('logo-text-top');
+
 const logoTextSubheading = document.getElementById('logo-text-subheading');
 const logoTextBottom = document.getElementById('logo-text-bottom');
 const logoTextMarkBottom = document.getElementById('logo-text-mark-bottom');
@@ -34,25 +34,22 @@ function debounce(func, wait) {
 }
 
 function fitTextToWidth(element, maxSize, minSize) {
-    if (!element || element.clientWidth <= 0) return;
+    if (!element) return;
 
-    let low = minSize;
-    let high = maxSize;
-    let best = minSize;
+    // Reset font size to max to get natural scrollWidth
+    element.style.fontSize = `${maxSize}px`;
+    
+    const clientWidth = element.clientWidth;
+    if (clientWidth <= 0) return;
 
-    while (high - low > 0.1) {
-        const mid = (low + high) / 2;
-        element.style.fontSize = `${mid}px`;
+    const scrollWidth = element.scrollWidth;
 
-        if (element.scrollWidth <= element.clientWidth + 0.5) {
-            best = mid;
-            low = mid;
-        } else {
-            high = mid;
-        }
+    if (scrollWidth > clientWidth) {
+        // Linearly scale size based on width ratio (using a small 0.99 safety factor for subpixel discrepancies)
+        const ratio = clientWidth / scrollWidth;
+        const targetSize = Math.max(minSize, Math.min(maxSize, maxSize * ratio * 0.99));
+        element.style.fontSize = `${targetSize.toFixed(2)}px`;
     }
-
-    element.style.fontSize = `${best.toFixed(2)}px`;
 }
 
 function fitMarkBottomText() {
@@ -69,7 +66,7 @@ function fitBottomText() {
 
 // Update top and bottom text as you type
 textInputTop.addEventListener('input', (e) => {
-    logoTextTop.textContent = e.target.value || "KOLEJ\nVOKASIONAL";
+    updateLogoTexts();
 });
 
 textInputSubheading.addEventListener('input', (e) => {
@@ -125,36 +122,39 @@ logoContainer.addEventListener('click', () => {
     logoContainer.classList.toggle('zoomed');
 });
 
+function updateLogoTexts() {
+    const prefix = (textInputTop.value || "KOLEJ VOKASIONAL").trim();
+    const branch = (textInputBottom.value || "").trim();
+    logoTextBottom.textContent = branch ? `${prefix} ${branch}`.toUpperCase() : prefix.toUpperCase();
+    fitBottomText();
+}
+
 // Combined resize handler with debouncing
 const handleResize = debounce(() => {
     fitMarkBottomText();
     fitSubheadingText();
-    fitBottomText();
+    updateLogoTexts();
 }, 150);
 
 window.addEventListener('resize', handleResize);
 window.addEventListener('load', () => {
-    if (!logoTextBottom.textContent.trim()) {
-        logoTextBottom.textContent = "";
-    }
-    // Initial fitting
+    updateLogoTexts();
     fitMarkBottomText();
     fitSubheadingText();
-    fitBottomText();
 });
 
 if (document.fonts && document.fonts.ready) {
     document.fonts.ready.then(() => {
+        updateLogoTexts();
         fitMarkBottomText();
         fitSubheadingText();
-        fitBottomText();
     });
 }
 
 // Download Function
 downloadBtn.addEventListener('click', () => {
     const originalBtnText = downloadBtn.innerHTML;
-    downloadBtn.innerHTML = '<span>Menjana Logo...</span>';
+    downloadBtn.innerHTML = '<span class="spinner"></span><span>Menjana Logo...</span>';
     downloadBtn.style.opacity = '0.7';
     downloadBtn.disabled = true;
 
@@ -190,9 +190,8 @@ downloadBtn.addEventListener('click', () => {
     }).then(canvas => {
         // Create an invisible link to trigger the download
         const link = document.createElement('a');
-        const top = logoTextTop.textContent.trim().replace(/\s+/g, '-');
         const bottom = logoTextBottom.textContent.trim().replace(/\s+/g, '-');
-        link.download = `LogoKV-${bottom}.png`;
+        link.download = `LogoKV-${bottom || 'Logo'}.png`;
         link.href = canvas.toDataURL("image/png");
         link.click();
         
@@ -209,45 +208,123 @@ downloadBtn.addEventListener('click', () => {
 });
 // Custom Beautiful Dropdown Logic
 const suggestionsContainer = document.getElementById('kv-suggestions');
+let currentSuggestions = [];
+let activeSuggestionIndex = -1;
+
+function cleanKVName(fullName) {
+    // Strip "Kolej Vokasional " or variations (case insensitive)
+    let name = fullName.replace(/^kolej\s+vokasional\s+/i, '');
+    // Strip parenthesized abbreviations like (ERT), (Pertanian), etc., but keep the text
+    name = name.replace(/^\((ERT|Pertanian|Perdagangan)\)\s+/i, '$1 ');
+    return name.trim();
+}
+
+function highlightMatch(text, query) {
+    if (!query) return text;
+    const escapedQuery = query.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+    const regex = new RegExp(`(${escapedQuery})`, 'gi');
+    return text.replace(regex, '<mark class="highlight">$1</mark>');
+}
+
+function selectSuggestion(kvName) {
+    const cleanedName = cleanKVName(kvName);
+    textInputBottom.value = cleanedName;
+    updateLogoTexts();
+    suggestionsContainer.classList.add('hidden');
+    textInputBottom.setAttribute('aria-expanded', 'false');
+    textInputBottom.removeAttribute('aria-activedescendant');
+    activeSuggestionIndex = -1;
+}
+
+function updateActiveSuggestion() {
+    const items = suggestionsContainer.querySelectorAll('.suggestion-item');
+    items.forEach((item, index) => {
+        if (index === activeSuggestionIndex) {
+            item.classList.add('active');
+            item.setAttribute('aria-selected', 'true');
+            textInputBottom.setAttribute('aria-activedescendant', item.id);
+            item.scrollIntoView({ block: 'nearest' });
+        } else {
+            item.classList.remove('active');
+            item.removeAttribute('aria-selected');
+        }
+    });
+}
 
 function updateSuggestions(val) {
     if (typeof kvListData === 'undefined') return;
     
-    const filtered = kvListData.filter(kv => 
-        kv.toLowerCase().includes(val.toLowerCase())
+    const inputVal = val.trim();
+    currentSuggestions = kvListData.filter(kv => 
+        kv.toLowerCase().includes(inputVal.toLowerCase())
     ).slice(0, 10); // Limit to top 10 for performance/beauty
 
+    activeSuggestionIndex = -1;
     suggestionsContainer.innerHTML = '';
     
-    if (filtered.length > 0 && val.length > 0) {
-        filtered.forEach(kvName => {
+    if (currentSuggestions.length > 0 && inputVal.length > 0) {
+        textInputBottom.setAttribute('aria-expanded', 'true');
+        currentSuggestions.forEach((kvName, index) => {
             const div = document.createElement('div');
             div.className = 'suggestion-item';
-            div.textContent = kvName;
+            div.id = `suggestion-item-${index}`;
+            div.setAttribute('role', 'option');
+            div.innerHTML = highlightMatch(kvName, inputVal);
             div.addEventListener('click', () => {
-                textInputBottom.value = kvName;
-                logoTextBottom.textContent = kvName;
-                fitBottomText();
-                suggestionsContainer.classList.add('hidden');
+                selectSuggestion(kvName);
             });
             suggestionsContainer.appendChild(div);
         });
         suggestionsContainer.classList.remove('hidden');
     } else {
+        textInputBottom.setAttribute('aria-expanded', 'false');
         suggestionsContainer.classList.add('hidden');
     }
 }
 
 textInputBottom.addEventListener('input', (e) => {
-    logoTextBottom.textContent = e.target.value || "";
-    fitBottomText();
+    updateLogoTexts();
     updateSuggestions(e.target.value);
+});
+
+// Handle key navigation inside the dropdown
+textInputBottom.addEventListener('keydown', (e) => {
+    if (suggestionsContainer.classList.contains('hidden')) {
+        return;
+    }
+
+    switch (e.key) {
+        case 'ArrowDown':
+            e.preventDefault();
+            activeSuggestionIndex = (activeSuggestionIndex + 1) % currentSuggestions.length;
+            updateActiveSuggestion();
+            break;
+        case 'ArrowUp':
+            e.preventDefault();
+            activeSuggestionIndex = (activeSuggestionIndex - 1 + currentSuggestions.length) % currentSuggestions.length;
+            updateActiveSuggestion();
+            break;
+        case 'Enter':
+            e.preventDefault();
+            if (activeSuggestionIndex >= 0 && activeSuggestionIndex < currentSuggestions.length) {
+                selectSuggestion(currentSuggestions[activeSuggestionIndex]);
+            }
+            break;
+        case 'Escape':
+            e.preventDefault();
+            suggestionsContainer.classList.add('hidden');
+            textInputBottom.setAttribute('aria-expanded', 'false');
+            textInputBottom.removeAttribute('aria-activedescendant');
+            activeSuggestionIndex = -1;
+            break;
+    }
 });
 
 // Hide suggestions when clicking outside
 document.addEventListener('click', (e) => {
     if (!e.target.closest('.dropdown-wrapper')) {
         suggestionsContainer.classList.add('hidden');
+        textInputBottom.setAttribute('aria-expanded', 'false');
     }
 });
 

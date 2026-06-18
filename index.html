@@ -54,10 +54,9 @@
                 <span id="logo-text-mark-bottom">bersama membina masa depan</span>
             </div>
             <div class="logo-text-wrap">
-                <span id="logo-text-top">KOLEJ VOKASIONAL</span>
                 <span id="logo-text-subheading">KEMENTERIAN PENDIDIKAN MALAYSIA</span>
                 <span class="text-divider"></span>
-                <span id="logo-text-bottom"></span>
+                <span id="logo-text-bottom">KOLEJ VOKASIONAL</span>
             </div>
         </div>
     </div>
@@ -78,10 +77,10 @@
                 </div>
                 <div class="input-group">
                     <label>Nama Kolej</label>
-                    <div class="dropdown-wrapper">
+                    <div class="dropdown-wrapper" role="combobox" aria-haspopup="listbox" aria-owns="kv-suggestions">
                         <input type="text" id="text-input-bottom" placeholder="KOLEJ VOKASIONAL..." maxlength="64"
-                            autocomplete="off">
-                        <div id="kv-suggestions" class="suggestions-container hidden"></div>
+                            autocomplete="off" aria-autocomplete="list" aria-controls="kv-suggestions" aria-expanded="false">
+                        <div id="kv-suggestions" class="suggestions-container hidden" role="listbox" aria-label="KV Suggestions"></div>
                     </div>
                 </div>
                 <label class="toggle-row" for="advanced-toggle" aria-label="Toggel Tetapan Lanjutan">
